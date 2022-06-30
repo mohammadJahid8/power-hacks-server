@@ -43,14 +43,17 @@ async function run() {
             const limit = Number(req.query.limit);
             const pageNumber = Number(req.query.pageNumber);
             const cursor = billsCollection.find();
-            const bills = await cursor.skip(limit    * pageNumber).limit(limit).toArray();
-            res.send(bills);
+            const bills = await cursor.skip(limit * pageNumber).limit(limit).toArray();
+            const totalBills = await billsCollection.estimatedDocumentCount();
+            res.send({ bills, totalBills });
         });
 
-        // app.post("/add-billing", async (req, res) => {
+        app.post("/add-billing", async (req, res) => {
+            const bill = req.body;
+            const result = await billsCollection.insertOne(bill);
+            res.send(result);
 
-
-        // })
+        })
 
     } finally {
     }
