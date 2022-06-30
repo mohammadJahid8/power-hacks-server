@@ -37,15 +37,20 @@ async function run() {
 
         const billsCollection = client.db("powerHacks").collection("bills");
 
+
+        //getting data from database
         app.get("/billing-list", async (req, res) => {
-            const tools = await billsCollection.find({}).toArray();
-            res.send(tools);
+            const limit = Number(req.query.limit);
+            const pageNumber = Number(req.query.pageNumber);
+            const cursor = billsCollection.find();
+            const bills = await cursor.skip(limit    * pageNumber).limit(limit).toArray();
+            res.send(bills);
         });
 
-        app.post("/add-billing", async (req, res) => {
-             
+        // app.post("/add-billing", async (req, res) => {
 
-        })
+
+        // })
 
     } finally {
     }
