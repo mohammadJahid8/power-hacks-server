@@ -7,7 +7,7 @@ const app = express();
 const port = process.env.PORT || 5000;
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 require("dotenv").config();
-const { createToken } = require("./JWT");
+const { createToken, validateToken } = require("./JWT");
 const bcrypt = require("bcrypt");
 const cookieParser = require("cookie-parser");
 app.use(cookieParser());
@@ -126,6 +126,7 @@ async function run() {
                 const accessToken = createToken(isUser);
                 res.cookie("access_token", accessToken, {
                     maxAge: 60 * 60 * 24 * 30 * 1000,
+                    httpOnly: true,
                 });
                 res.json('Login Successful');
                 // res.json('Login Successful');
@@ -137,6 +138,11 @@ async function run() {
                     return res.status(400).json({ error: error.message });
                 }
             }
+        })
+
+        //profile
+        app.get("/profile", validateToken, async (req, res) => {
+            res.send("Profile");
         })
 
     } finally {
