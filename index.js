@@ -7,10 +7,10 @@ const app = express();
 const port = process.env.PORT || 5000;
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 require("dotenv").config();
-
+const { createToken } = require("./JWT");
 const bcrypt = require("bcrypt");
-
-
+const cookieParser = require("cookie-parser");
+app.use(cookieParser());
 app.use(cors());
 const corsConfig = {
     origin: "*",
@@ -123,8 +123,15 @@ async function run() {
                 if (!isMatch) {
                     return res.status(400).json({ error: "Password is incorrect" });
                 }
-                const token = jwt.sign({ id: isUser._id }, process.env.JWT_KEY);
-                res.status(200).json({ token });
+                const accessToken = createToken(isUser);
+                res.cookie("access_token", accessToken, {
+                    maxAge: 60 * 60 * 24 * 30 * 1000,
+                });
+                res.json('Login Successful');
+                // res.json('Login Successful');
+
+                // const token = jwt.sign({ id: isUser._id }, process.env.JWT_KEY);
+                // res.status(200).json({ token });
             } catch (error) {
                 if (error) {
                     return res.status(400).json({ error: error.message });
