@@ -43,17 +43,44 @@ async function run() {
             const limit = Number(req.query.limit);
             const pageNumber = Number(req.query.pageNumber);
             const cursor = billsCollection.find();
-            const bills = await cursor.skip(limit * pageNumber).limit(limit).toArray();
+            // console.log(cu);
+            const bill = await cursor.skip(limit * pageNumber).limit(limit).toArray();
+            const bills = bill.reverse();
             const totalBills = await billsCollection.estimatedDocumentCount();
             res.send({ bills, totalBills });
         });
 
+        //posted a bill
         app.post("/add-billing", async (req, res) => {
             const bill = req.body;
             const result = await billsCollection.insertOne(bill);
             res.send(result);
+        });
 
-        })
+        //update a bill
+        app.put("/update-billing/:id", async (req, res) => {
+            const id = req.params.id;
+            const newBill = req.body;
+            const query = { _id: ObjectId(id) };
+            const options = { upsert: true };
+            const updatedDoc = {
+                $set: newBill
+            };
+            const result = await billsCollection.updateOne(
+                query,
+                updatedDoc,
+                options
+            );
+            res.send(result);
+        });
+
+        //Delete a bill
+        app.delete("/delete-billing/:id", async (req, res) => {
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const result = await billsCollection.deleteOne(query);
+            res.send(result);
+        });
 
     } finally {
     }
