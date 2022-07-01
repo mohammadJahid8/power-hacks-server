@@ -8,6 +8,9 @@ const port = process.env.PORT || 5000;
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 require("dotenv").config();
 
+const bcrypt = require("bcrypt");
+
+
 app.use(cors());
 const corsConfig = {
     origin: "*",
@@ -36,6 +39,7 @@ async function run() {
         await client.connect();
 
         const billsCollection = client.db("powerHacks").collection("bills");
+        const usersCollection = client.db("powerHacks").collection("users");
 
 
         //getting data from database
@@ -81,6 +85,52 @@ async function run() {
             const result = await billsCollection.deleteOne(query);
             res.send(result);
         });
+
+        //register
+        app.post("/registration", async (req, res) => {
+            const { email, username, password } = req.body;
+            try {
+                let isUser = await usersCollection.findOne({ email });
+                if (isUser) {
+                    return res.status(400).json({ error: "User Already exists" });
+                }
+                const hashedPass = await bcrypt.hash(password, 10);
+                const user = {
+                    username,
+                    email,
+                    password: hashedPass,
+                };
+                const result = await usersCollection.insertOne(user);
+                // res.send(result);
+                // await user.save();
+                res.status(201).json({ message: "User Created Successfully" });
+            } catch (error) {
+                if (error) {
+                    return res.status(400).json({ error: error.message });
+                }
+            }
+
+
+        })
+        app.post("/login", async (req, res) => {
+            const { email, password } = req.body;
+            try {
+                let isUser = await usersCollection.findOne({ email });
+                if (!isUser) {
+                    return res.status(400).json({ error: "User does not exists" });
+                }
+                const isMatch = await bcrypt.compare(password, isUser.password);
+                if (!isMatch) {
+                    return res.status(400).json({ error: "Password is incorrect" });
+                }
+                const token = jwt.sign({ id: isUser._id }, process.env.JWT_KEY);
+                res.status(200).json({ token });
+            } catch (error) {
+                if (error) {
+                    return res.status(400).json({ error: error.message });
+                }
+            }
+        })
 
     } finally {
     }
